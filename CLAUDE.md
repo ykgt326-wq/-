@@ -6,6 +6,7 @@ This file provides guidance for AI assistants working with this repository.
 
 - **Repository**: `-`
 - **Status**: Newly initialized — no source code, build system, or dependencies configured yet.
+- **Remote**: Hosted on a Git remote (origin).
 
 ## Development Setup
 
@@ -44,6 +45,7 @@ As the codebase grows, document project-specific conventions here (naming, file 
 ```
 ./
 ├── CLAUDE.md        # AI assistant guidance (this file)
+├── README.md        # Project readme
 └── .git/            # Git repository metadata
 ```
 
@@ -51,9 +53,11 @@ Update this tree as the project structure develops.
 
 ## Git Workflow
 
-- Default development branch: to be determined
-- Commit messages should be clear and descriptive
-- Keep commits focused on a single logical change
+- **Default branch**: `master`
+- Feature branches use the `claude/` prefix (e.g., `claude/<description>-<session-id>`).
+- Commit messages should be clear and descriptive.
+- Keep commits focused on a single logical change.
+- GPG commit signing is enabled — do not disable it.
 
 ## Notes for AI Assistants
 
@@ -61,3 +65,4 @@ Update this tree as the project structure develops.
 - When adding new tooling or major structural changes, update this file to reflect the current state.
 - Prefer editing existing files over creating new ones.
 - Do not introduce unnecessary complexity or over-engineer solutions.
+- There is no `.gitignore` yet — create one when adding language-specific tooling or generated files.
