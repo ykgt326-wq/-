@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旭川周辺スキー場 営業状況</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 32px 16px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #93c5fd, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header p {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .api-banner {
+      margin: 16px;
+      padding: 14px 16px;
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.25);
+      border-radius: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .api-banner label {
+      font-size: 13px;
+      color: #fbbf24;
+      white-space: nowrap;
+    }
+
+    .api-banner input {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .api-banner input:focus { border-color: #fbbf24; }
+
+    .api-banner button {
+      padding: 8px 18px;
+      background: #fbbf24;
+      color: #1e293b;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .api-banner button:hover { background: #f59e0b; }
+
+    .api-banner .hint {
+      width: 100%;
+      font-size: 11px;
+      color: #a1946c;
+    }
+
+    .api-banner .hint a { color: #fbbf24; }
+
+    .last-updated {
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .resort-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+      padding: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .resort-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .resort-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .card-header .name-area { flex: 1; }
+
+    .card-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.3;
+    }
+
+    .card-header .distance {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .status-open {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-closed {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-unknown {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .weather-row {
+      display: flex;
+      gap: 0;
+      padding: 0 16px;
+      margin-bottom: 12px;
+    }
+
+    .weather-item {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      background: rgba(0,0,0,0.15);
+      border-right: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .weather-item:first-child { border-radius: 8px 0 0 8px; }
+    .weather-item:last-child { border-radius: 0 8px 8px 0; border-right: none; }
+
+    .weather-item .label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .weather-item .value {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 2px;
+      color: #e2e8f0;
+    }
+
+    .weather-item .value.temp-cold { color: #93c5fd; }
+    .weather-item .value.temp-very-cold { color: #60a5fa; }
+    .weather-item .value.snow { color: #c4b5fd; }
+    .weather-item .value.wind-strong { color: #fbbf24; }
+
+    .weather-item .unit {
+      font-size: 11px;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+
+    .weather-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .weather-desc {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .weather-loading {
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .info-section {
+      padding: 0 16px 14px;
+      font-size: 13px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-row .info-label { color: #64748b; font-size: 12px; }
+    .info-row .info-value { color: #cbd5e1; font-size: 12px; text-align: right; }
+
+    .card-links {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .card-links a {
+      flex: 1;
+      text-align: center;
+      padding: 11px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #93c5fd;
+      text-decoration: none;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      transition: background 0.15s;
+    }
+
+    .card-links a:last-child { border-right: none; }
+    .card-links a:hover { background: rgba(147, 197, 253, 0.08); }
+
+    .legend {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 16px 24px;
+      font-size: 11px;
+      color: #475569;
+      line-height: 1.7;
+    }
+
+    .legend a { color: #64748b; }
+
+    @media (max-width: 420px) {
+      .resort-grid { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
+      .card-links a { font-size: 11px; padding: 10px 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>旭川周辺スキー場 リアルタイム情報</h1>
+    <p>旭川駅から車で2時間圏内のスキー場 — 天気・気温・積雪を自動取得</p>
+  </div>
+
+  <div class="api-banner" id="apiBanner">
+    <label for="apiKeyInput">OpenWeatherMap API Key:</label>
+    <input type="text" id="apiKeyInput" placeholder="APIキーを入力">
+    <button onclick="saveApiKey()">保存して取得</button>
+    <div class="hint">
+      無料で取得:
+      <a href="https://openweathermap.org/appid" target="_blank" rel="noopener">openweathermap.org</a>
+      でアカウント作成 → APIキー発行（無料枠で十分です）
+    </div>
+  </div>
+
+  <div class="last-updated" id="lastUpdated"></div>
+
+  <div class="resort-grid" id="resortGrid"></div>
+
+  <div class="legend">
+    <strong>データソースについて:</strong>
+    天気データは OpenWeatherMap API からリアルタイム取得しています。
+    営業シーズンは各スキー場公式サイトの情報に基づきます。
+    リフト運行状況・コース状況の正確な最新情報は各公式サイトで必ずご確認ください。
+    悪天候等により急な運休・営業時間変更の場合があります。
+    <br>
+    情報参考:
+    <a href="https://surfsnow.jp/search/list/spl_area01.php?areacdm=1" target="_blank">SURF&SNOW 道北</a> |
+    <a href="https://tenki.jp/season/ski/1/1/" target="_blank">tenki.jp 北海道スキー場</a> |
+    <a href="https://weathernews.jp/ski/" target="_blank">ウェザーニュース</a>
+  </div>
+
+  <script>
+    const RESORTS = [
+      {
+        id: 'santa',
+        name: 'サンタプレゼントパーク',
+        subtitle: 'マロースゲレンデ',
+        distance: '車 約15分',
+        driveMin: 15,
+        lat: 43.7553,
+        lon: 142.3080,
+        seasonStart: '2025-12-19',
+        seasonEnd: '2026-03-22',
+        hours: '9:00〜21:00（ナイター16:00〜）',
+        courses: 6,
+        lifts: 3,
+        phone: '0166-63-3232',
+        url: 'https://www.asahikawasantapresentpark.com/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0602s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10147/'
+      },
+      {
+        id: 'pippu',
+        name: 'ぴっぷスキー場',
+        subtitle: '',
+        distance: '車 約25分',
+        driveMin: 25,
+        lat: 43.8618,
+        lon: 142.4700,
+        seasonStart: '2025-12-13',
+        seasonEnd: '2026-03-22',
+        hours: '9:00〜20:30（ナイター16:00〜）',
+        courses: 9,
+        lifts: 3,
+        phone: '0166-85-3056',
+        url: 'https://www.town.pippu.hokkaido.jp/ski/top.html',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0603s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10148/'
+      },
+      {
+        id: 'canmore',
+        name: 'キャンモアスキービレッジ',
+        subtitle: '',
+        distance: '車 約30分',
+        driveMin: 30,
+        lat: 43.6830,
+        lon: 142.5200,
+        seasonStart: '2025-12-20',
+        seasonEnd: '2026-03-15',
+        hours: '9:00〜20:30（ナイター16:30〜）',
+        courses: 6,
+        lifts: 2,
+        phone: '0166-82-5001',
+        url: 'https://www.canmore-ski.jp/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0632s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10146/'
+      },
+      {
+        id: 'kamui',
+        name: 'カムイスキーリンクス',
+        subtitle: '道北最大級',
+        distance: '車 約30分',
+        driveMin: 30,
+        lat: 43.8100,
+        lon: 142.1350,
+        seasonStart: '2025-12-13',
+        seasonEnd: '2026-03-31',
+        hours: '9:00〜16:00',
+        courses: 25,
+        lifts: 5,
+        gondola: 1,
+        phone: '0166-72-2311',
+        url: 'https://www.kamui-skilinks.com/',
+        statusUrl: 'https://www.kamui-skilinks.com/today/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0604s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/11406/'
+      },
+      {
+        id: 'asahidake',
+        name: '大雪山 旭岳ロープウェイ',
+        subtitle: '標高1,600m・山岳スキー',
+        distance: '車 約60分',
+        driveMin: 60,
+        lat: 43.6550,
+        lon: 142.8530,
+        seasonStart: '2025-12-01',
+        seasonEnd: '2026-05-31',
+        hours: 'ロープウェイ 9:00〜16:00',
+        courses: 3,
+        lifts: 0,
+        ropeway: 1,
+        phone: '0166-68-9111',
+        url: 'https://asahidake.hokkaido.jp/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0983s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10145/'
+      },
+      {
+        id: 'furano',
+        name: '富良野スキー場',
+        subtitle: 'プリンススノーリゾート',
+        distance: '車 約90分',
+        driveMin: 90,
+        lat: 43.3060,
+        lon: 142.3820,
+        seasonStart: '2025-11-29',
+        seasonEnd: '2026-05-06',
+        hours: '8:30〜16:00 / ナイター〜19:30',
+        courses: 28,
+        lifts: 10,
+        phone: '0167-22-1111',
+        url: 'https://www.princehotels.co.jp/ski/furano/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0118s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10149/'
+      },
+      {
+        id: 'tomamu',
+        name: '星野リゾート トマム',
+        subtitle: '',
+        distance: '車 約120分',
+        driveMin: 120,
+        lat: 43.0670,
+        lon: 142.6200,
+        seasonStart: '2025-12-01',
+        seasonEnd: '2026-04-05',
+        hours: '8:45〜18:00',
+        courses: 29,
+        lifts: 6,
+        gondola: 1,
+        phone: '0167-58-1111',
+        url: 'https://www.snowtomamu.jp/winter/ski/',
+        statusUrl: 'https://www.snowtomamu.jp/winter/ski/ski-slope/condition/',
+        surfsnow: 'https://surfsnow.jp/guide/htm/r0274s.htm',
+        tenki: 'https://tenki.jp/season/ski/1/1/10150/'
+      }
+    ];
+
+    const weatherDescJa = {
+      'Clear': '快晴', 'Clouds': '曇り', 'Rain': '雨', 'Drizzle': '霧雨',
+      'Snow': '雪', 'Thunderstorm': '雷雨', 'Mist': '霧', 'Fog': '濃霧',
+      'Haze': 'もや', 'Smoke': '煙霧', 'Dust': '砂塵', 'Tornado': '竜巻'
+    };
+
+    const weatherEmoji = {
+      'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Drizzle': '🌦️',
+      'Snow': '🌨️', 'Thunderstorm': '⛈️', 'Mist': '🌫️', 'Fog': '🌫️',
+      'Haze': '🌫️'
+    };
+
+    function isInSeason(resort) {
+      const today = new Date().toISOString().slice(0, 10);
+      return today >= resort.seasonStart && today <= resort.seasonEnd;
+    }
+
+    function formatSeasonDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    function getApiKey() {
+      return localStorage.getItem('owm_api_key') || '';
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      if (!key) return;
+      localStorage.setItem('owm_api_key', key);
+      fetchAllWeather();
+    }
+
+    function renderResorts() {
+      const grid = document.getElementById('resortGrid');
+      grid.innerHTML = RESORTS.map(r => {
+        const inSeason = isInSeason(r);
+        const statusClass = inSeason ? 'status-open' : 'status-closed';
+        const statusText = inSeason ? '営業期間内' : '営業期間外';
+        const liftInfo = [];
+        if (r.gondola) liftInfo.push(`ゴンドラ${r.gondola}`);
+        if (r.ropeway) liftInfo.push(`ロープウェイ${r.ropeway}`);
+        if (r.lifts) liftInfo.push(`リフト${r.lifts}`);
+
+        return `
+          <div class="resort-card" id="card-${r.id}">
+            <div class="card-header">
+              <div class="name-area">
+                <h2>${esc(r.name)}</h2>
+                ${r.subtitle ? `<div class="distance">${esc(r.subtitle)}</div>` : ''}
+                <div class="distance">旭川駅から ${esc(r.distance)}</div>
+              </div>
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            <div class="weather-row" id="weather-${r.id}">
+              <div class="weather-loading">天気データを取得中...</div>
+            </div>
+            <div class="info-section">
+              <div class="info-row">
+                <span class="info-label">営業期間</span>
+                <span class="info-value">${formatSeasonDate(r.seasonStart)} 〜 ${formatSeasonDate(r.seasonEnd)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">営業時間</span>
+                <span class="info-value">${esc(r.hours)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">コース / 索道</span>
+                <span class="info-value">${r.courses}コース / ${liftInfo.join('・')}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">電話</span>
+                <span class="info-value"><a href="tel:${r.phone}" style="color:#93c5fd;text-decoration:none">${r.phone}</a></span>
+              </div>
+            </div>
+            <div class="card-links">
+              <a href="${esc(r.url)}" target="_blank" rel="noopener">公式サイト</a>
+              ${r.statusUrl ? `<a href="${esc(r.statusUrl)}" target="_blank" rel="noopener">本日の状況</a>` : ''}
+              <a href="${esc(r.tenki)}" target="_blank" rel="noopener">tenki.jp</a>
+              <a href="${esc(r.surfsnow)}" target="_blank" rel="noopener">SURF&SNOW</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchWeather(resort, apiKey) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${resort.lat}&lon=${resort.lon}&units=metric&lang=ja&appid=${apiKey}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.error(`Weather fetch failed for ${resort.name}:`, e);
+        return null;
+      }
+    }
+
+    function renderWeather(resortId, data) {
+      const el = document.getElementById(`weather-${resortId}`);
+      if (!data) {
+        el.innerHTML = '<div class="weather-loading" style="color:#f87171">天気データ取得失敗（APIキーを確認してください）</div>';
+        return;
+      }
+
+      const temp = Math.round(data.main.temp);
+      const feelsLike = Math.round(data.main.feels_like);
+      const mainWeather = data.weather[0].main;
+      const desc = data.weather[0].description;
+      const emoji = weatherEmoji[mainWeather] || '🌤️';
+      const wind = data.wind.speed.toFixed(1);
+      const humidity = data.main.humidity;
+      const snow1h = data.snow ? (data.snow['1h'] || data.snow['3h'] || 0) : 0;
+
+      const tempClass = temp <= -10 ? 'temp-very-cold' : temp <= 0 ? 'temp-cold' : '';
+      const windClass = parseFloat(wind) >= 10 ? 'wind-strong' : '';
+
+      el.innerHTML = `
+        <div class="weather-item">
+          <div class="label">天気</div>
+          <div class="weather-icon">${emoji}</div>
+          <div class="weather-desc">${esc(desc)}</div>
+        </div>
+        <div class="weather-item">
+          <div class="label">気温</div>
+          <div class="value ${tempClass}">${temp}<span class="unit">°C</span></div>
+          <div class="weather-desc">体感 ${feelsLike}°C</div>
+        </div>
+        <div class="weather-item">
+          <div class="label">降雪</div>
+          <div class="value snow">${snow1h > 0 ? snow1h.toFixed(1) : '—'}<span class="unit">${snow1h > 0 ? 'mm' : ''}</span></div>
+          <div class="weather-desc">${snow1h > 0 ? '直近1h' : 'なし'}</div>
+        </div>
+        <div class="weather-item">
+          <div class="label">風速</div>
+          <div class="value ${windClass}">${wind}<span class="unit">m/s</span></div>
+          <div class="weather-desc">湿度 ${humidity}%</div>
+        </div>
+      `;
+    }
+
+    async function fetchAllWeather() {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        RESORTS.forEach(r => {
+          const el = document.getElementById(`weather-${r.id}`);
+          if (el) el.innerHTML = '<div class="weather-loading">APIキーを入力すると天気情報を表示します</div>';
+        });
+        return;
+      }
+
+      document.getElementById('apiBanner').style.display = 'none';
+
+      const promises = RESORTS.map(async (r) => {
+        const data = await fetchWeather(r, apiKey);
+        renderWeather(r.id, data);
+        return data;
+      });
+
+      const results = await Promise.all(promises);
+
+      if (results.some(d => d !== null)) {
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        document.getElementById('lastUpdated').textContent = `最終更新: ${timeStr}（10分ごとに自動更新）`;
+      } else {
+        document.getElementById('apiBanner').style.display = 'flex';
+      }
+    }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    // Init
+    renderResorts();
+    const savedKey = getApiKey();
+    if (savedKey) {
+      document.getElementById('apiKeyInput').value = savedKey;
+      document.getElementById('apiBanner').style.display = 'none';
+    }
+    fetchAllWeather();
+
+    // Auto-refresh every 10 minutes
+    setInterval(fetchAllWeather, 10 * 60 * 1000);
+  </script>
+</body>
+</html>
