@@ -59,6 +59,16 @@ Update this tree as the project structure develops.
 - Keep commits focused on a single logical change.
 - GPG commit signing is enabled — do not disable it.
 
+## Development Environment (Host Machine)
+
+- **Device**: Lenovo IdeaPad 5 15ALC05 (`yg`)
+- **OS**: Windows 11 Home (Version 25H2, Build 26200.8037)
+- **CPU**: AMD Ryzen 5 5500U with Radeon Graphics (2.10 GHz)
+- **RAM**: 8.00 GB (3200 MT/s)
+- **Storage**: 477 GB (129 GB used)
+- **GPU**: AMD Radeon(TM) Graphics (2 GB)
+- **Architecture**: 64-bit OS, x64-based processor
+
 ## Notes for AI Assistants
 
 - Always read this file at the start of a session for up-to-date guidance.
