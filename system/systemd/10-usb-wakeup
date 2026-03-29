@@ -1,0 +1,13 @@
+#!/bin/bash
+# /etc/systemd/system-sleep/10-usb-wakeup
+# サスペンド/ハイバネート復帰後にUSB wakeup設定を再適用する
+# systemd-sleep により次の引数で呼び出される: $1=pre|post  $2=suspend|hibernate|...
+#
+# カーネルはサスペンド後にUSBデバイスのpower/wakeupをリセットする場合があるため、
+# 復帰のたびに再適用が必要。
+
+case "$1/$2" in
+    post/suspend|post/hibernate|post/hybrid-sleep|post/suspend-then-hibernate)
+        /usr/local/bin/enable-usb-wakeup.sh
+        ;;
+esac
