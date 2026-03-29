@@ -1,0 +1,17 @@
+[Unit]
+Description=Enable USB keyboard/mouse wakeup from suspend
+Documentation=https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-wakeup
+After=multi-user.target
+# サスペンド後も再適用する
+After=systemd-suspend.service
+After=systemd-hibernate.service
+After=systemd-hybrid-sleep.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/enable-usb-wakeup.sh
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=sleep.target

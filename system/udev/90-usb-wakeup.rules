@@ -1,0 +1,9 @@
+# USB HIDデバイス（キーボード・マウス）をスリープから復帰できるよう設定
+# USB HID interface class 0x03 = HID (keyboard, mouse, etc.)
+
+ACTION=="add", SUBSYSTEM=="usb", DRIVER=="usbhid", \
+    ATTR{power/wakeup}="enabled"
+
+ACTION=="add", SUBSYSTEM=="usb", \
+    ATTRS{bInterfaceClass}=="03", \
+    ATTR{power/wakeup}="enabled"
